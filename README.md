@@ -16,7 +16,7 @@ python cli.py
 ```
 cli.py        — головне меню
 contacts.py   — адресна книга (дані + CLI)
-**notebook.py   — нотатник (дані + CLI)
+notebook.py   — нотатник (дані + CLI)
 utils.py      — спільні утиліти: автодоповнення, ask_yes_no
 ```
 
