@@ -14,49 +14,26 @@ from utils import CommandCompleter, ask_yes_no
 console = Console()
 
 
-# =========================
-# Fields
-# =========================
 class Field:
-    """Базовий клас для полів нотатки."""
-
     def __init__(self, value: str | list) -> None:
-        """
-        Ініціалізує поле із заданим значенням.
-
-        :param value: Значення поля.
-        """
         self.value = value
 
     def __str__(self) -> str:
-        """Повертає рядкове представлення значення поля."""
         return str(self.value)
 
 
 class Title(Field):
-    """Поле заголовку нотатки."""
     pass
 
 
 class Content(Field):
-    """Поле вмісту нотатки."""
     pass
 
 
 class Tags(Field):
-    """
-    Поле тегів нотатки.
-
-    Зберігає теги як список рядків.
-    Приймає як рядок з комами, так і готовий список.
-    """
+    """Зберігає теги як список рядків."""
 
     def __init__(self, value: Optional[str | list]) -> None:
-        """
-        Ініціалізує теги з рядка або списку.
-
-        :param value: Рядок тегів через кому або список рядків.
-        """
         if isinstance(value, str):
             value = [tag.strip() for tag in value.split(",") if tag.strip()]
         elif not isinstance(value, list):
@@ -64,20 +41,10 @@ class Tags(Field):
         super().__init__(value)
 
 
-# =========================
-# Note
-# =========================
 class Note:
-    """Нотатка із заголовком, вмістом, тегами та датами створення/оновлення."""
+    """Нотатка із заголовком, вмістом і тегами."""
 
     def __init__(self, title: str, content: str, tags: Optional[str] = None) -> None:
-        """
-        Створює нову нотатку.
-
-        :param title: Заголовок нотатки.
-        :param content: Вміст нотатки.
-        :param tags: Теги через кому (необов'язково).
-        """
         self.title = Title(title)
         self.content = Content(content)
         self.tags = Tags(tags)
@@ -85,12 +52,6 @@ class Note:
         self.updated_at: datetime = datetime.now()
 
     def edit(self, new_content: Optional[str] = None, new_tags: Optional[str] = None) -> None:
-        """
-        Оновлює вміст або теги нотатки.
-
-        :param new_content: Новий вміст (якщо None — не змінюється).
-        :param new_tags: Нові теги через кому (якщо None — не змінюються).
-        """
         if new_content is not None:
             self.content = Content(new_content)
         if new_tags is not None:
@@ -98,50 +59,23 @@ class Note:
         self.updated_at = datetime.now()
 
 
-# =========================
-# Notebook
-# =========================
 class Notebook(UserDict):
-    """Колекція нотаток із методами для додавання, пошуку, видалення та сортування."""
+    """Колекція нотаток із базовими операціями."""
 
     def add_note(self, note: Note) -> None:
-        """
-        Додає нотатку до нотатника.
-
-        :param note: Об'єкт нотатки для додавання.
-        """
         self.data[note.title.value] = note
 
     def find(self, title: str) -> Optional[Note]:
-        """
-        Знаходить нотатку за точним заголовком.
-
-        :param title: Заголовок нотатки.
-        :return: Нотатка або None, якщо не знайдено.
-        """
         return self.data.get(title)
 
     def delete(self, title: str) -> bool:
-        """
-        Видаляє нотатку за заголовком.
-
-        :param title: Заголовок нотатки для видалення.
-        :return: True якщо видалено, False якщо не знайдено.
-        """
         if title in self.data:
             del self.data[title]
             return True
         return False
 
     def search(self, query: Optional[str] = None) -> list[Note]:
-        """
-        Шукає нотатки за частковим збігом у заголовку або тегах.
-
-        Якщо запит не вказано — повертає всі нотатки.
-
-        :param query: Пошуковий рядок (необов'язково).
-        :return: Список нотаток, що відповідають запиту.
-        """
+        """Шукає нотатки за заголовком або тегами."""
         result = []
         for note in self.data.values():
             if not query:
@@ -155,40 +89,24 @@ class Notebook(UserDict):
         return result
 
     def sort_notes_by_tag(self, tag: str) -> list[Note]:
-        """
-        Сортує нотатки: спочатку ті, що містять вказаний тег, потім решта.
-
-        :param tag: Тег для сортування.
-        :return: Відсортований список нотаток.
-        """
-        notes_with_tag = [n for n in self.data.values() if tag.lower() in [
-            t.lower() for t in n.tags.value]]
+        """Спочатку повертає нотатки з тегом, потім решту."""
+        notes_with_tag = [
+            n for n in self.data.values()
+            if tag.lower() in [t.lower() for t in n.tags.value]
+        ]
         notes_without_tag = [
-            n for n in self.data.values() if n not in notes_with_tag]
+            n for n in self.data.values()
+            if n not in notes_with_tag
+        ]
         return notes_with_tag + notes_without_tag
 
 
-# =========================
-# Save / Load
-# =========================
 def save_data(book: Notebook) -> None:
-    """
-    Зберігає нотатник у файл notebook.pkl.
-
-    :param book: нотатник для збереження.
-    """
     with open("notebook.pkl", "wb") as f:
         pickle.dump(book, f)
 
 
 def load_data() -> Notebook:
-    """
-    Завантажує нотатник із файлу notebook.pkl.
-
-    Якщо файл не знайдено — повертає порожній нотатник.
-
-    :return: Завантажений або новий порожній нотатник.
-    """
     try:
         with open("notebook.pkl", "rb") as f:
             return pickle.load(f)
@@ -196,15 +114,7 @@ def load_data() -> Notebook:
         return Notebook()
 
 
-# =========================
-# CLI
-# =========================
 def create_note(book: Notebook) -> None:
-    """
-    Інтерактивно створює нову нотатку і додає її до нотатника.
-
-    :param book: нотатник, до якого додається нотатка.
-    """
     title = input("Заголовок нотатки: ")
     if book.find(title):
         print("Нотатка з таким заголовком вже існує")
@@ -217,14 +127,6 @@ def create_note(book: Notebook) -> None:
 
 
 def edit_note(book: Notebook, title: str = "") -> None:
-    """
-    Інтерактивно редагує існуючу нотатку.
-
-    Якщо заголовок не передано — запитує його у користувача.
-
-    :param book: нотатник із нотатками.
-    :param title: Заголовок нотатки для редагування (необов'язково).
-    """
     if not title:
         title = input("Заголовок нотатки: ")
     note = book.find(title)
@@ -245,14 +147,6 @@ def edit_note(book: Notebook, title: str = "") -> None:
 
 
 def delete_note(book: Notebook, title: str = "") -> None:
-    """
-    Видаляє нотатку з нотатника.
-
-    Якщо заголовок не передано — запитує його у користувача.
-
-    :param book: нотатник із нотатками.
-    :param title: Заголовок нотатки для видалення (необов'язково).
-    """
     if not title:
         title = input("Заголовок нотатки: ")
     if book.delete(title):
@@ -262,14 +156,6 @@ def delete_note(book: Notebook, title: str = "") -> None:
 
 
 def show_notes(book: Notebook, query: Optional[str] = None) -> None:
-    """
-    Виводить нотатки у вигляді таблиці.
-
-    Якщо передано запит — фільтрує за заголовком або тегом.
-
-    :param book: нотатник із нотатками.
-    :param query: Пошуковий рядок (необов'язково).
-    """
     notes = book.search(query)
     if not notes:
         print("Нотаток не знайдено")
@@ -294,21 +180,19 @@ def show_notes(book: Notebook, query: Optional[str] = None) -> None:
 
 
 def run(book: Notebook) -> None:
-    """
-    Запускає інтерактивний цикл нотатника.
-
-    :param book: нотатник для роботи.
-    """
-    commands = ["add", "edit", "delete", "all",
-                "search", "sort", "help", "back"]
+    commands = ["add", "edit", "delete", "all", "search", "sort", "help", "back"]
     session = PromptSession()
-    completer = CommandCompleter(commands, {
-        "titles": lambda: list(book.data.keys()),
-        "tags": lambda: list({tag for note in book.data.values() for tag in note.tags.value}),
-    })
+    completer = CommandCompleter(
+        commands,
+        {
+            "titles": lambda: list(book.data.keys()),
+            "tags": lambda: list({tag for note in book.data.values() for tag in note.tags.value}),
+        },
+    )
 
     console.print(
-        "\n[cyan]📓 Нотатник[/cyan] — введіть [bold]help[/bold] для списку команд, або [bold]back[/bold] для повернення до головного меню\n")
+        "\n[cyan]📓 Нотатник[/cyan] — введіть [bold]help[/bold] для списку команд, або [bold]back[/bold] для повернення до головного меню\n"
+    )
 
     while True:
         user_input = session.prompt("Нотатник › ", completer=completer).strip()
